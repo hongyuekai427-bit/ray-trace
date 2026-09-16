@@ -43,10 +43,10 @@ uniform int u_toneMapping;
 uniform int u_shadowSamples;
 uniform float u_resolutionScale;
 
-// Scene data - max 32 objects, 8 lights, 32 materials
-#define MAX_OBJECTS 32
-#define MAX_LIGHTS 8
-#define MAX_MATERIALS 32
+// Scene data - max 16 objects, 4 lights, 16 materials (reduced for compatibility)
+#define MAX_OBJECTS 16
+#define MAX_LIGHTS 4
+#define MAX_MATERIALS 16
 
 // Object data: type(1) + pos(3) + rot(3) + scale(3) + params(3) + matIdx(1) + visible(1) = 15 floats per object
 uniform float u_objects[MAX_OBJECTS * 15];
@@ -612,6 +612,13 @@ export class WebGLRenderer {
 
     this.gl = gl;
 
+    // Set initial canvas size
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      this.canvas.width = rect.width;
+      this.canvas.height = rect.height;
+    }
+
     // Handle context loss
     this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
@@ -632,33 +639,58 @@ export class WebGLRenderer {
     if (!this.gl) return;
     const gl = this.gl;
 
-    const vs = gl.createShader(gl.VERTEX_SHADER)!;
+    const vs = gl.createShader(gl.VERTEX_SHADER);
+    if (!vs) {
+      console.error('Failed to create vertex shader');
+      return;
+    }
     gl.shaderSource(vs, VERTEX_SHADER);
     gl.compileShader(vs);
     if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
       console.error('Vertex shader error:', gl.getShaderInfoLog(vs));
+      gl.deleteShader(vs);
       return;
     }
 
-    const fs = gl.createShader(gl.FRAGMENT_SHADER)!;
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    if (!fs) {
+      console.error('Failed to create fragment shader');
+      gl.deleteShader(vs);
+      return;
+    }
     gl.shaderSource(fs, FRAGMENT_SHADER);
     gl.compileShader(fs);
     if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
       console.error('Fragment shader error:', gl.getShaderInfoLog(fs));
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
       return;
     }
 
-    const program = gl.createProgram()!;
+    const program = gl.createProgram();
+    if (!program) {
+      console.error('Failed to create program');
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
+      return;
+    }
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       console.error('Program link error:', gl.getProgramInfoLog(program));
+      gl.deleteProgram(program);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
       return;
     }
 
     this.program = program;
     gl.useProgram(program);
+    
+    // Clean up shaders after linking
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
   }
 
   private setupGeometry() {
@@ -786,9 +818,9 @@ export class WebGLRenderer {
 
     // Objects
     gl.uniform1i(gl.getUniformLocation(this.program, 'u_objectCount'), scene.objects.length);
-    const objData = new Float32Array(32 * 15);
+    const objData = new Float32Array(16 * 15);
     scene.objects.forEach((obj, i) => {
-      if (i >= 32) return;
+      if (i >= 16) return;
       const base = i * 15;
       const typeMap: Record<string, number> = { sphere: 0, plane: 1, box: 2, cylinder: 3, cone: 4 };
       objData[base] = typeMap[obj.type] || 0;
@@ -812,9 +844,9 @@ export class WebGLRenderer {
 
     // Lights
     gl.uniform1i(gl.getUniformLocation(this.program, 'u_lightCount'), scene.lights.length);
-    const lightData = new Float32Array(8 * 13);
+    const lightData = new Float32Array(4 * 13);
     scene.lights.forEach((light, i) => {
-      if (i >= 8) return;
+      if (i >= 4) return;
       const base = i * 13;
       const typeMap: Record<string, number> = { point: 0, directional: 1, area: 2 };
       lightData[base] = typeMap[light.type] || 0;
@@ -835,9 +867,9 @@ export class WebGLRenderer {
 
     // Materials
     gl.uniform1i(gl.getUniformLocation(this.program, 'u_materialCount'), scene.materials.length);
-    const matData = new Float32Array(32 * 14);
+    const matData = new Float32Array(16 * 14);
     scene.materials.forEach((mat, i) => {
-      if (i >= 32) return;
+      if (i >= 16) return;
       const base = i * 14;
       const typeMap: Record<string, number> = { diffuse: 0, reflective: 1, glass: 2, emissive: 3, metal: 4 };
       matData[base] = typeMap[mat.type] || 0;

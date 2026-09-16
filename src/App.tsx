@@ -28,6 +28,14 @@ function Viewport() {
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    
+    // Ensure canvas has dimensions
+    const rect = canvasRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      canvasRef.current.width = 800;
+      canvasRef.current.height = 600;
+    }
+    
     const renderer = new WebGLRenderer(canvasRef.current);
     rendererRef.current = renderer;
     renderer.setOnFrame((stats: RenderStats) => {
