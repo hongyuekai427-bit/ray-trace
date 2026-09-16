@@ -66,7 +66,22 @@ function Viewport() {
       }
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // Also observe container resize
+    let resizeObserver: ResizeObserver | null = null;
+    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        if (rendererRef.current) {
+          rendererRef.current.updateScene(scene);
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
   }, [scene]);
 
   // Camera orbit controls
@@ -263,11 +278,16 @@ function Viewport() {
   }, [scene.camera, updateCamera]);
 
   return (
-    <div ref={containerRef} className="w-full h-full relative">
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden" style={{ minHeight: '300px' }}>
       <canvas
         ref={canvasRef}
-        className="w-full h-full block touch-none"
-        style={{ imageRendering: 'auto', cursor: 'grab' }}
+        className="absolute inset-0 touch-none"
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          imageRendering: 'auto', 
+          cursor: 'grab',
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -554,7 +574,7 @@ function RenderSettingsPanel() {
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-2">Quality</h3>
         <div className="space-y-2">
-          <SliderInput label="Resolution" value={settings.resolution} min={25} max={100} step={25}
+          <SliderInput label="Resolution" value={settings.resolution} min={50} max={100} step={5}
             onChange={(v) => updateRendererSettings({ resolution: v })} format={(v) => `${v}%`} />
           <SliderInput label="Samples" value={settings.samples} min={1} max={32} step={1}
             onChange={(v) => updateRendererSettings({ samples: v })} />
@@ -563,6 +583,10 @@ function RenderSettingsPanel() {
           <SliderInput label="Shadow Samples" value={settings.shadowSamples} min={1} max={16} step={1}
             onChange={(v) => updateRendererSettings({ shadowSamples: v })} />
         </div>
+        <p className="text-xs text-white/30 mt-2">
+          Render: {Math.round(window.innerWidth * (settings.resolution / 100) * Math.min(window.devicePixelRatio, 2))}×{Math.round(window.innerHeight * (settings.resolution / 100) * Math.min(window.devicePixelRatio, 2))} px
+          {window.devicePixelRatio > 1 && <span className="text-cyan-400/50"> • {window.devicePixelRatio}x display</span>}
+        </p>
       </div>
 
       <div>
@@ -585,9 +609,9 @@ function RenderSettingsPanel() {
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-2">Quality Presets</h3>
         <div className="grid grid-cols-2 gap-1">
-          <button onClick={() => updateRendererSettings({ resolution: 50, samples: 1, maxBounces: 1, shadowSamples: 1 })}
+          <button onClick={() => updateRendererSettings({ resolution: 75, samples: 2, maxBounces: 2, shadowSamples: 1 })}
             className="px-2 py-1.5 text-xs bg-green-500/10 hover:bg-green-500/20 text-green-300 rounded">⚡ Fast</button>
-          <button onClick={() => updateRendererSettings({ resolution: 75, samples: 4, maxBounces: 4, shadowSamples: 1 })}
+          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 4, maxBounces: 4, shadowSamples: 1 })}
             className="px-2 py-1.5 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 rounded">⚖ Balanced</button>
           <button onClick={() => updateRendererSettings({ resolution: 100, samples: 8, maxBounces: 8, shadowSamples: 4 })}
             className="px-2 py-1.5 text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 rounded">✦ Quality</button>

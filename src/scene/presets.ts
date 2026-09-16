@@ -10,7 +10,7 @@ function baseScene(): SceneData {
     lights: [],
     materials: [],
     environment: { type: 'gradient', color: [0.1, 0.15, 0.3], color2: [0.4, 0.5, 0.7], intensity: 0.3 },
-    rendererSettings: { resolution: 75, samples: 4, maxBounces: 4, shadowSamples: 1, progressive: true, renderMode: 'full', toneMapping: 'aces', showGrid: true, showAxes: true, denoise: false, useBVH: true },
+    rendererSettings: { resolution: 100, samples: 4, maxBounces: 4, shadowSamples: 1, progressive: true, renderMode: 'full', toneMapping: 'aces', showGrid: true, showAxes: true, denoise: false, useBVH: true },
   };
 }
 

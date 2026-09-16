@@ -912,11 +912,12 @@ export class WebGLRenderer {
   }
 
   getRenderResolution(): [number, number] {
-    const scale = (this.sceneData?.rendererSettings.resolution || 75) / 100;
+    const scale = (this.sceneData?.rendererSettings.resolution || 100) / 100;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
     const rect = this.canvas.getBoundingClientRect();
     return [
-      Math.max(1, Math.floor(rect.width * scale)),
-      Math.max(1, Math.floor(rect.height * scale)),
+      Math.max(1, Math.floor(rect.width * scale * dpr)),
+      Math.max(1, Math.floor(rect.height * scale * dpr)),
     ];
   }
 
