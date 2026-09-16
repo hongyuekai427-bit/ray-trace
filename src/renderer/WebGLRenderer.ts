@@ -433,10 +433,13 @@ vec3 traceRay(Ray ray, vec2 seed, int maxBounces) {
       }
     }
     
-    // Add ambient
-    directLight += matColor * getEnvironment(rec.normal) * 0.1;
-    
-    color += throughput * directLight * (1.0 - transmission);
+    // Add ambient for non-transparent surfaces
+    if (transmission < 0.5) {
+      directLight += matColor * getEnvironment(rec.normal) * 0.1;
+      color += throughput * directLight;
+    }
+    // For transparent materials (transmission >= 0.5), skip direct lighting
+    // The light will be carried through by refraction rays
     
     // Fresnel calculation (Schlick approximation)
     float cosTheta = abs(dot(-ray.direction, rec.normal));
