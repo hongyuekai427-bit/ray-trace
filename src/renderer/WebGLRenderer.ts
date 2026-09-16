@@ -433,35 +433,57 @@ vec3 traceRay(Ray ray, vec2 seed, int maxBounces) {
       }
     }
     
-    // Add ambient
-    directLight += matColor * getEnvironment(rec.normal) * 0.1;
+    // Add ambient for non-transparent surfaces
+    if (transmission < 0.5) {
+      directLight += matColor * getEnvironment(rec.normal) * 0.1;
+      color += throughput * directLight;
+    }
+    // For transparent materials (transmission >= 0.5), skip direct lighting
+    // The light will be carried through by refraction rays
     
-    color += throughput * directLight * (1.0 - transmission);
+    // Fresnel calculation (Schlick approximation)
+    float cosTheta = abs(dot(-ray.direction, rec.normal));
+    float r0 = pow((1.0 - ior) / (1.0 + ior), 2.0);
+    float fresnel = r0 + (1.0 - r0) * pow(1.0 - cosTheta, 5.0);
     
-    // Russian roulette for reflection/refraction
+    // For glass: decide between reflection and refraction based on Fresnel
     float rand = hash(seed + float(bounce) * 3.7);
     
-    if (transmission > 0.01 && rand < transmission) {
-      // Refraction
-      float eta = rec.frontFace ? (1.0 / ior) : ior;
-      vec3 rd = refract(ray.direction, rec.normal, eta);
-      if (length(rd) < 0.001) {
-        // Total internal reflection
-        rd = reflect(ray.direction, rec.normal);
+    if (transmission > 0.01) {
+      // Glass material - choose reflection or refraction based on Fresnel
+      if (rand < fresnel) {
+        // Reflection
+        vec3 reflected = reflect(ray.direction, rec.normal);
+        if (roughness > 0.01) {
+          vec3 perturb = randomInUnitSphere(seed + float(bounce) * 5.3, 0.0) * roughness;
+          reflected = normalize(reflected + perturb);
+        }
+        ray = createRay(rec.point + reflected * 0.001, reflected);
+        throughput *= matColor;
+      } else {
+        // Refraction
+        float eta = rec.frontFace ? (1.0 / ior) : ior;
+        vec3 rd = refract(ray.direction, rec.normal, eta);
+        if (length(rd) < 0.001) {
+          // Total internal reflection - fallback to reflection
+          rd = reflect(ray.direction, rec.normal);
+          ray = createRay(rec.point + rd * 0.001, rd);
+          throughput *= matColor;
+        } else {
+          ray = createRay(rec.point + rd * 0.001, rd);
+          throughput *= matColor;
+        }
       }
-      ray = createRay(rec.point + rd * 0.001, rd);
-      throughput *= matColor;
-    } else if (reflectivity > 0.01 && rand < reflectivity + transmission) {
-      // Reflection
+    } else if (reflectivity > 0.01 && rand < reflectivity) {
+      // Non-glass reflective material
       vec3 reflected = reflect(ray.direction, rec.normal);
-      // Add roughness perturbation
       if (roughness > 0.01) {
         vec3 perturb = randomInUnitSphere(seed + float(bounce) * 5.3, 0.0) * roughness;
         reflected = normalize(reflected + perturb);
       }
       ray = createRay(rec.point + reflected * 0.001, reflected);
       vec3 fresnelColor = mix(matColor, vec3(1.0), metallic);
-      throughput *= fresnelColor * reflectivity;
+      throughput *= fresnelColor;
     } else {
       break;
     }
@@ -912,11 +934,12 @@ export class WebGLRenderer {
   }
 
   getRenderResolution(): [number, number] {
-    const scale = (this.sceneData?.rendererSettings.resolution || 75) / 100;
+    const scale = (this.sceneData?.rendererSettings.resolution || 100) / 100;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
     const rect = this.canvas.getBoundingClientRect();
     return [
-      Math.max(1, Math.floor(rect.width * scale)),
-      Math.max(1, Math.floor(rect.height * scale)),
+      Math.max(1, Math.floor(rect.width * scale * dpr)),
+      Math.max(1, Math.floor(rect.height * scale * dpr)),
     ];
   }
 

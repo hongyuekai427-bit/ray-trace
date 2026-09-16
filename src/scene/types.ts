@@ -259,9 +259,9 @@ export function createDefaultScene(): SceneData {
       intensity: 0.3,
     },
     rendererSettings: {
-      resolution: 75,
-      samples: 4,
-      maxBounces: 4,
+      resolution: 100,
+      samples: 8,
+      maxBounces: 6,
       shadowSamples: 1,
       progressive: true,
       renderMode: 'full',
