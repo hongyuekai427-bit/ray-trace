@@ -609,13 +609,13 @@ function RenderSettingsPanel() {
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-2">Quality Presets</h3>
         <div className="grid grid-cols-2 gap-1">
-          <button onClick={() => updateRendererSettings({ resolution: 75, samples: 2, maxBounces: 2, shadowSamples: 1 })}
+          <button onClick={() => updateRendererSettings({ resolution: 75, samples: 4, maxBounces: 3, shadowSamples: 1 })}
             className="px-2 py-1.5 text-xs bg-green-500/10 hover:bg-green-500/20 text-green-300 rounded">⚡ Fast</button>
-          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 4, maxBounces: 4, shadowSamples: 1 })}
+          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 8, maxBounces: 6, shadowSamples: 1 })}
             className="px-2 py-1.5 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 rounded">⚖ Balanced</button>
-          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 8, maxBounces: 8, shadowSamples: 4 })}
+          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 16, maxBounces: 8, shadowSamples: 4 })}
             className="px-2 py-1.5 text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 rounded">✦ Quality</button>
-          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 16, maxBounces: 16, shadowSamples: 8 })}
+          <button onClick={() => updateRendererSettings({ resolution: 100, samples: 32, maxBounces: 16, shadowSamples: 8 })}
             className="px-2 py-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-300 rounded">🔥 Insane</button>
         </div>
         <p className="text-xs text-white/30 mt-1">⚠ High settings increase GPU workload significantly</p>

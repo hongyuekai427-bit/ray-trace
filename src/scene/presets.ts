@@ -10,7 +10,7 @@ function baseScene(): SceneData {
     lights: [],
     materials: [],
     environment: { type: 'gradient', color: [0.1, 0.15, 0.3], color2: [0.4, 0.5, 0.7], intensity: 0.3 },
-    rendererSettings: { resolution: 100, samples: 4, maxBounces: 4, shadowSamples: 1, progressive: true, renderMode: 'full', toneMapping: 'aces', showGrid: true, showAxes: true, denoise: false, useBVH: true },
+    rendererSettings: { resolution: 100, samples: 8, maxBounces: 6, shadowSamples: 1, progressive: true, renderMode: 'full', toneMapping: 'aces', showGrid: true, showAxes: true, denoise: false, useBVH: true },
   };
 }
 
@@ -121,6 +121,7 @@ export function mirrorRoomPreset(): SceneData {
   scene.lights = [l1, l2];
   scene.environment = { type: 'dark', color: [0.02, 0.02, 0.05], color2: [0.05, 0.05, 0.1], intensity: 0.2 };
   scene.rendererSettings.maxBounces = 8;
+  scene.rendererSettings.samples = 12;
   return scene;
 }
 
@@ -173,6 +174,7 @@ export function glassLabPreset(): SceneData {
   scene.lights = [l1];
   scene.environment = { type: 'gradient', color: [0.2, 0.25, 0.4], color2: [0.6, 0.7, 0.9], intensity: 0.5 };
   scene.rendererSettings.maxBounces = 8;
+  scene.rendererSettings.samples = 16;
   return scene;
 }
 
@@ -451,6 +453,7 @@ export function rayPlaygroundPreset(): SceneData {
   scene.camera.target = [0, 0.5, 0];
   scene.environment = { type: 'gradient', color: [0.1, 0.12, 0.2], color2: [0.3, 0.4, 0.6], intensity: 0.3 };
   scene.rendererSettings.maxBounces = 6;
+  scene.rendererSettings.samples = 12;
   return scene;
 }
 
